@@ -1,0 +1,65 @@
+IMAGE_BOX = "generic/ubuntu2204"
+IP_CONTROL_PLANE = "192.168.56.56"
+KUBERNETES_VERSION = "1.32.1-1.1"
+POD_CIDR = "10.244.0.0/16"
+SERVICE_CIDR = "10.96.0.0/12"
+TIMEZONE_VMS = "America/Sao_Paulo"
+
+Vagrant.configure("2") do |config|
+
+    config.vm.provision "shell", inline: <<-SHELL
+    echo "192.168.56.56  master-1" >> /etc/hosts
+    echo "192.168.56.61  worker-1" >> /etc/hosts
+    echo "192.168.56.62  worker-2" >> /etc/hosts
+    SHELL
+
+    config.vm.provision "shell", path: "scripts/common.sh", env: {"KUBERNETES_VERSION" => "#{KUBERNETES_VERSION}",
+                                                                  "TIMEZONE_VMS" => "#{TIMEZONE_VMS}",
+                                                                  "IP_CONTROL_PLANE" => "#{IP_CONTROL_PLANE}" }
+
+    config.vm.synced_folder "./vagrant-files", "/vagrant-files"
+
+    (1..1).each do |i|
+        config.vm.define "master-#{i}" do |k8s|
+            k8s.vm.box = "#{IMAGE_BOX}"
+            k8s.vm.hostname = "master-#{i}"
+            k8s.vm.network "private_network", ip: "192.168.56.56"
+
+            k8s.ssh.insert_key = false
+            k8s.ssh.private_key_path = ['~/.vagrant.d/insecure_private_key', '~/.ssh/id_rsa']
+            k8s.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+
+            k8s.vm.provider "virtualbox" do |vb|
+              vb.gui = false
+              vb.cpus = 2
+              vb.memory = "2048"
+            end
+
+            k8s.vm.provision "shell", path: "scripts/control-plane.sh", env: { "IP_CONTROL_PLANE" => "#{IP_CONTROL_PLANE}",
+                                                                               "POD_CIDR" => "#{POD_CIDR}",
+                                                                               "SERVICE_CIDR" => "#{SERVICE_CIDR}" }
+            
+            k8s.vm.provision "shell", path: "scripts/network.sh"
+            k8s.vm.provision "shell", path: "scripts/manifests.sh"
+        end
+    end
+
+    (1..2).each do |i|
+        config.vm.define "worker-#{i}" do |k8s|
+            k8s.vm.box = "#{IMAGE_BOX}"
+            k8s.vm.hostname = "worker-#{i}"
+            k8s.vm.network "private_network", ip: "192.168.56.6#{i}"
+
+            k8s.ssh.insert_key = false
+            k8s.ssh.private_key_path = ['~/.vagrant.d/insecure_private_key', '~/.ssh/id_rsa']
+            k8s.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+
+            k8s.vm.provider "virtualbox" do |vb|
+              vb.gui = false
+              vb.cpus = 1
+              vb.memory = "1024"
+            end
+            k8s.vm.provision "shell", path: "scripts/node.sh"
+        end
+    end
+end
