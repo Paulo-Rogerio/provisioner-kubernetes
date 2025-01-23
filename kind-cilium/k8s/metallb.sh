@@ -22,9 +22,9 @@ output "Colima Vm Iface...........: ${colima_vm_iface}"
 export colima_kind_iface=$(colima ssh -- bash -c "ip -br address show to ${colima_kind_cidr} | cut -d' ' -f1")
 output "Colima Kind iface.........: ${colima_kind_iface}"
 
-export colima_iptables="sudo iptables -A FORWARD -s ${colima_host_ip} -d ${colima_kind_cidr} -i ${colima_vm_iface} -o ${colima_kind_iface} -p tcp -j ACCEPT"
+export colima_iptables="sudo -h 127.0.0.1 iptables -A FORWARD -s ${colima_host_ip} -d ${colima_kind_cidr} -i ${colima_vm_iface} -o ${colima_kind_iface} -p tcp -j ACCEPT"
 
-export iptable_enable=$(colima ssh -- bash -c "sudo iptables -nL | grep ${colima_host_ip} | grep -o ACCEPT || echo REJECT")
+export iptable_enable=$(colima ssh -- bash -c "sudo -h 127.0.0.1 iptables -nL | grep ${colima_host_ip} | grep -o ACCEPT || echo REJECT")
 
 [[ ${iptable_enable} == "REJECT" ]] && colima ssh -- bash -c "${colima_iptables}" || output "Colima Iptables Enable....: True"
 

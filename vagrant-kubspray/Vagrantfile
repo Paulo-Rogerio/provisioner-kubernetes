@@ -1,16 +1,4 @@
-# apt list -a kubeadm
-# ubeadm/unknown 1.31.5-1.1 amd64 [upgradable from: 1.31.0-1.1]
-# kubeadm/unknown 1.31.4-1.1 amd64
-# kubeadm/unknown 1.31.3-1.1 amd64
-# kubeadm/unknown 1.31.2-1.1 amd64
-# kubeadm/unknown 1.31.1-1.1 amd64
-# kubeadm/unknown 1.31.0-1.1 amd64
-
 IMAGE_BOX = "generic/ubuntu2204"
-IP_CONTROL_PLANE = "192.168.56.56"
-KUBERNETES_VERSION = "1.31.0-1.1"
-POD_CIDR = "10.244.0.0/16"
-SERVICE_CIDR = "10.96.0.0/12"
 TIMEZONE_VMS = "America/Sao_Paulo"
 
 Vagrant.configure("2") do |config|
@@ -20,11 +8,7 @@ Vagrant.configure("2") do |config|
     echo "192.168.56.61  worker-1" >> /etc/hosts
     SHELL
 
-    config.vm.provision "shell", path: "scripts/common.sh", env: {"KUBERNETES_VERSION" => "#{KUBERNETES_VERSION}",
-                                                                  "TIMEZONE_VMS" => "#{TIMEZONE_VMS}",
-                                                                  "IP_CONTROL_PLANE" => "#{IP_CONTROL_PLANE}" }
-
-    config.vm.synced_folder "./vagrant-files", "/vagrant-files"
+    config.vm.provision "shell", path: "scripts/common.sh", env: { "TIMEZONE_VMS" => "#{TIMEZONE_VMS}" }
 
     (1..1).each do |i|
         config.vm.define "master-#{i}" do |k8s|
@@ -41,13 +25,6 @@ Vagrant.configure("2") do |config|
               vb.cpus = 2
               vb.memory = "2048"
             end
-
-            k8s.vm.provision "shell", path: "scripts/control-plane.sh", env: { "IP_CONTROL_PLANE" => "#{IP_CONTROL_PLANE}",
-                                                                               "POD_CIDR" => "#{POD_CIDR}",
-                                                                               "SERVICE_CIDR" => "#{SERVICE_CIDR}" }
-            
-            k8s.vm.provision "shell", path: "scripts/network.sh"
-            k8s.vm.provision "shell", path: "scripts/manifests.sh"
         end
     end
 
@@ -66,7 +43,6 @@ Vagrant.configure("2") do |config|
               vb.cpus = 1
               vb.memory = "1024"
             end
-            k8s.vm.provision "shell", path: "scripts/node.sh"
         end
     end
 end
