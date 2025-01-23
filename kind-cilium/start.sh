@@ -27,9 +27,9 @@ fs.inotify.max_user_watches = 1048576
 fs.inotify.max_user_instances = 512
 EOF"
 
-colima ssh -- bash -c "sudo -i mv /tmp/sysctl.conf /etc/sysctl.conf"
+colima ssh -- bash -c "sudo -h 127.0.0.1 -i mv /tmp/sysctl.conf /etc/sysctl.conf"
 
-colima ssh -- bash -c "sudo -i /usr/sbin/sysctl -p"
+colima ssh -- bash -c "sudo -h 127.0.0.1 -i /usr/sbin/sysctl -p"
 
 envsubst < k8s/cluster.yaml > k8s/tmp/cluster.yaml
 sh k8s/create-cluster.sh
