@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 cd $(dirname $0)
 
 function check_pod_running(){

@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 export red="\033[0;31m"
 export yellow="\033[33m"
