@@ -17,32 +17,50 @@ function check_pod_running(){
 [[ $(kind get clusters) == "${clusterName}" ]] || kind create cluster --config=tmp/cluster.yaml
 check_pod_running
 
-echo "Install Metallb..."
+echo "***********************************************************************"
+echo "* Install Metallb                                                     *"
+echo "***********************************************************************"
+echo
 helm repo add metallb https://metallb.github.io/metallb
 helm repo update
 helm install metallb metallb/metallb --namespace metallb-system --create-namespace
 check_pod_running
 
 # CIDR Metallb
-echo "Apply Metallb..."
 ./metallb.sh
 
+echo "***********************************************************************"
+echo "* Install Metrics Seerver                                             *"
+echo "***********************************************************************"
+echo
 helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
 helm repo update
 helm upgrade --install --namespace kube-system --create-namespace metrics-server metrics-server/metrics-server -f values/metric-server.yaml
 check_pod_running
 
 # Gateway-API ( CDR )
+echo "***********************************************************************"
+echo "* Install CRD                                                         *"
+echo "***********************************************************************"
+echo
 kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/latest/download/standard-install.yaml
 check_pod_running
 
 # Fabric Nginx
+echo "***********************************************************************"
+echo "* Install Nginx Fabric                                                *"
+echo "***********************************************************************"
+echo
 helm install ngf oci://ghcr.io/nginx/charts/nginx-gateway-fabric \
   --namespace nginx-gateway \
   --create-namespace \
   --set nginx.service.type=LoadBalancer
 check_pod_running  
 
+echo "***********************************************************************"
+echo "* Install Deployments Test                                            *"
+echo "***********************************************************************"
+echo
 kubectl apply -f example.yaml
 check_pod_running
 
@@ -54,8 +72,11 @@ echo
 curl ${loadBalancerIP}/foo
 echo
 echo "---------------------"
-echo
 
+echo "***********************************************************************"
+echo "* Remove Deployments Test                                             *"
+echo "***********************************************************************"
+echo
 kubectl delete -f example.yaml
 
 # Clean tmp files
