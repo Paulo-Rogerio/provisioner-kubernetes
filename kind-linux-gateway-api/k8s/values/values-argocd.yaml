@@ -1,0 +1,6 @@
+global:
+  domain: argocd.prgs-corp.xyz
+
+configs:
+  params:
+    server.insecure: true

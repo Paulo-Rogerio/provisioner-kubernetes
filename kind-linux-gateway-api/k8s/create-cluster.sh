@@ -82,3 +82,47 @@ kubectl delete -f example.yaml
 # Clean tmp files
 rm tmp/cluster.yaml
 rm tmp/metallb.yaml
+
+
+echo "***********************************************************************"
+echo "* Deployment ArgoCD                                                   *"
+echo "***********************************************************************"
+echo
+
+kubectl neat <<< $(kubectl create ns argocd --dry-run=client -o yaml) | kubectl apply -f -
+
+cp ../../../../Estudos-Certbot/docker-compose/letsencrypt/prgs-corp.xyz/fullchain1.pem certs/tls.crt
+cp ../../../../Estudos-Certbot/docker-compose/letsencrypt/prgs-corp.xyz/privkey1.pem certs/tls.key
+
+kubectl create secret tls argocd-tls \
+  --cert=certs/tls.crt \
+  --key=certs/tls.key \
+  --namespace=argocd --dry-run=client -o yaml | kubectl apply -f -
+
+rm -f certs/tls.crt
+rm -f certs/tls.key
+
+cat > values/values-argocd.yaml <<EOF
+global:
+  domain: argocd.prgs-corp.xyz
+
+configs:
+  params:
+    server.insecure: true
+EOF
+
+
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+helm search repo argo/argo-cd --versions | head -n 10
+helm upgrade \
+  --install \
+  --namespace argocd \
+  --create-namespace argo-cd argo/argo-cd \
+  --version 9.1.8 \
+  -f values/values-argocd.yaml
+
+check_pod_running
+kubectl apply -f gateway-api-argocd.yaml
+
+echo "Run: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d | xargs" 

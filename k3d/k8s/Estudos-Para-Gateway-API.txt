@@ -1,0 +1,273 @@
+
+# v1.4.0
+#VERSION="$(curl -sSL https://api.github.com/repos/kubernetes-sigs/gateway-api/releases/latest | grep 'tag_name' | cut -d\" -f4)"
+#kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${VERSION}/standard-install.yaml
+
+#VERSION=$(curl -sSL https://api.github.com/repos/nginx/nginx-gateway-fabric/releases/latest | grep 'tag_name' | cut -d\" -f4)
+#kubectl kustomize "https://github.com/nginx/nginx-gateway-fabric/config/crd/gateway-api/standard?ref=${VERSION}" | kubectl apply -f -
+#kubectl apply -f https://raw.githubusercontent.com/nginxinc/nginx-gateway-fabric/${VERSION}/deploy/crds.yaml
+
+
+
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/latest/download/standard-install.yaml
+kubectl get crd | grep gateway
+helm install ngf oci://ghcr.io/nginx/charts/nginx-gateway-fabric \
+  --namespace nginx-gateway \
+  --create-namespace \
+  --set nginx.service.type=NodePort
+
+
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: gateway
+spec:
+  gatewayClassName: nginx
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All    
+EOF
+k get gateway
+
+kubectl get gatewayclass nginx
+
+kubectl get svc -n nginx-gateway
+
+
+
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: ngf-nginx-gateway-fabric
+  namespace: nginx-gateway
+  labels:
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/instance: nginx-gateway
+    app.kubernetes.io/version: "1.4.0"
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/instance: nginx-gateway
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 80
+      nodePort: 31437
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 443
+      nodePort: 31438
+EOF
+
+k get svc -n nginx-gateway
+
+
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: example-class
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: example-httproute
+spec:
+  parentRefs:
+  - name: example-gateway
+  hostnames:
+  - "hello.prgs.corp"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /foo
+    backendRefs:
+    - name: foo-service
+      port: 8080
+EOF
+
+
+
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: prgs
+servers: 1
+agents: 0
+
+ports:
+  - port: 80:31007
+    nodeFilters:
+      - server:0
+  - port: 443:31008
+    nodeFilters:
+      - server:0
+
+
+kubectl patch nginxproxy nginx-gateway-proxy-config \
+  -n nginx-gateway \
+  --type='merge' \
+  -p='{"spec":{"kubernetes":{"service":{"nodePorts":[{"port":31007,"listenerPort":80}]}}}}'
+
+
+
+
+#========================================
+
+
+# v1.4.0
+#VERSION="$(curl -sSL https://api.github.com/repos/kubernetes-sigs/gateway-api/releases/latest | grep 'tag_name' | cut -d\" -f4)"
+#kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${VERSION}/standard-install.yaml
+
+# v2.2.1
+#kubectl apply -f https://raw.githubusercontent.com/nginxinc/nginx-gateway-fabric/${VERSION}/deploy/crds.yaml
+#kubectl apply -f https://raw.githubusercontent.com/nginxinc/nginx-gateway-fabric/${VERSION}/deploy/default/deploy.yaml
+
+VERSION=$(curl -sSL https://api.github.com/repos/nginx/nginx-gateway-fabric/releases/latest | grep 'tag_name' | cut -d\" -f4)
+kubectl kustomize "https://github.com/nginx/nginx-gateway-fabric/config/crd/gateway-api/standard?ref=${VERSION}" | kubectl apply -f -
+
+
+helm install ngf oci://ghcr.io/nginx/charts/nginx-gateway-fabric \
+  --create-namespace -n ngf-gatewayapi-ns
+  --set nginx.service.type=LoadBalancer
+
+
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.networking.k8s.io/v1  
+kind: Gateway
+metadata:
+  name: gateway
+  namespace: ngf-gatewayapi-ns
+spec:
+  gatewayClassName: nginx
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+EOF
+
+
+kubectl apply -f k8s/example.yaml
+
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: example-httproute
+spec:
+  parentRefs:
+  - name: example-gateway
+  hostnames:
+  - "hello.prgs.corp"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /foo
+    backendRefs:
+    - name: foo-service
+      port: 8080
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: foo-routes
+spec:
+  parentRefs:
+    - name: gateway
+      namespace: ngf-gatewayapi-ns
+      sectionName: http
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix 
+            value: /foo
+      backendRefs:
+        - name: foo-service
+          port: 8080
+EOF
+
+cat <<EOF | kubectl apply -f -
+kind: Service
+apiVersion: v1
+metadata:
+  name: bar-service
+spec:
+  selector:
+    app: bar
+  ports:
+  - port: 8080
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: example-class
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: example-gateway
+spec:
+  gatewayClassName: example-class
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: example-httproute
+spec:
+  parentRefs:
+  - name: example-gateway
+  hostnames:
+  - "hello.prgs.corp"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /foo
+    backendRefs:
+    - name: foo-service
+      port: 8080
+EOF
+
+
+helm repo add gloo https://storage.googleapis.com/solo-public-helm
+helm repo update
+kubectl create namespace gloo-system
+helm install gloo gloo/gloo --namespace gloo-system
+
+helm uninstall gloo --namespace gloo-system
+kubectl delete namespace gloo-system
+
