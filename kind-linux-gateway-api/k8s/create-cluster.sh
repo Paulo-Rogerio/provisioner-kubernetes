@@ -14,6 +14,15 @@ function check_pod_running(){
     echo "Pods Running"
 }
 
+[[ -n $(docker ps -f "name=kind-registry" -f "status=running" -q) ]] || 
+{
+ docker run -d \
+  --restart=always \
+  -p 5000:5000 \
+  --name kind-registry \
+  registry:2
+}
+
 [[ $(kind get clusters) == "${clusterName}" ]] || kind create cluster --config=tmp/cluster.yaml
 check_pod_running
 
