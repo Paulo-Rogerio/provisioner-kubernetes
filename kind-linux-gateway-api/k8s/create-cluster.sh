@@ -19,6 +19,7 @@ function check_pod_running(){
  docker run -d \
   --restart=always \
   -p 5000:5000 \
+  -v $(pwd)/registry.yml:/etc/docker/registry/config.yml \
   --name kind-registry \
   registry:2
 }
