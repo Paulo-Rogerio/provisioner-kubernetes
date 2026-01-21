@@ -17,5 +17,5 @@ function install()
 }
 
 # Call
-params "control-plane" 2048 3
-params "worker-node" 4096 4
+install "control-plane" 2048 3
+install "worker-node" 4096 4
