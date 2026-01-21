@@ -1,0 +1,8 @@
+kubectl edit configmap argocd-tls-certs-cm -n argocd
+kubectl get configmaps -n argocd argocd-tls-certs-cm -o yaml
+kubectl rollout restart deployment -n argocd \
+  argo-cd-argocd-repo-server \
+  argo-cd-argocd-server \
+  argo-cd-argocd-application-controller
+
+kubectl rollout restart deployment -n argocd argo-cd-argocd-repo-server

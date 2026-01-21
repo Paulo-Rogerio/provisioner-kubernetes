@@ -1,3 +1,4 @@
 vagrant/.vagrant
 kind/k8s/tmp
 talos-linux/kvm/configs/
+talos-linux/k8s/certs/
