@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-cd $(dirname $0)
-
 function output(){
   echo $(date +%Y-%m-%d-%H:%M:%S) - $@
 }

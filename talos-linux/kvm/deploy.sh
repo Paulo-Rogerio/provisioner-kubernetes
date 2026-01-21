@@ -7,4 +7,4 @@ do
   eval $i
 done
 
-source ../k8s/create-cluster.sh
+bash ../k8s/create-cluster.sh
