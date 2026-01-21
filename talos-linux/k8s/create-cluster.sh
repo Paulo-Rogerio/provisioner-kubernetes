@@ -24,18 +24,39 @@ function check_pod_running(){
   registry:2
 }
 
+#==================================
+# CIDR Metallb
+#==================================
 echo "***********************************************************************"
 echo "* Install Metallb                                                     *"
 echo "***********************************************************************"
 echo
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: metallb-system
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: baseline
+    pod-security.kubernetes.io/warn: baseline 
+EOF
+
+kubectl label ns metallb-system \
+  pod-security.kubernetes.io/enforce=privileged \
+  --overwrite -o yaml --dry-run=client | kubectl apply -f -
+
 helm repo add metallb https://metallb.github.io/metallb
 helm repo update
-helm install metallb metallb/metallb --namespace metallb-system --create-namespace
+helm install metallb metallb/metallb --namespace metallb-system 
 check_pod_running
 
-# CIDR Metallb
 ./metallb.sh
 
+#==================================
+# Metric Server
+#==================================
 echo "***********************************************************************"
 echo "* Install Metrics Server                                              *"
 echo "***********************************************************************"
@@ -45,7 +66,9 @@ helm repo update
 helm upgrade --install --namespace kube-system --create-namespace metrics-server metrics-server/metrics-server -f values/metric-server.yaml
 check_pod_running
 
+#==================================
 # Gateway-API ( CDR )
+#==================================
 echo "***********************************************************************"
 echo "* Install CRD                                                         *"
 echo "***********************************************************************"
@@ -53,7 +76,9 @@ echo
 kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/latest/download/standard-install.yaml
 check_pod_running
 
+#==================================
 # Fabric Nginx
+#==================================
 echo "***********************************************************************"
 echo "* Install Nginx Fabric                                                *"
 echo "***********************************************************************"
@@ -64,6 +89,9 @@ helm install ngf oci://ghcr.io/nginx/charts/nginx-gateway-fabric \
   --set nginx.service.type=LoadBalancer
 check_pod_running  
 
+#==================================
+# Deploy Teste
+#==================================
 echo "***********************************************************************"
 echo "* Install Deployments Test                                            *"
 echo "***********************************************************************"
@@ -73,10 +101,10 @@ check_pod_running
 
 loadBalancerIP=$(kubectl get gateway gateway --output jsonpath='{.status.addresses[*].value}')
 
-echo
 echo "---------------------"
 echo
 curl ${loadBalancerIP}/foo
+echo
 echo
 echo "---------------------"
 
@@ -86,11 +114,14 @@ echo "***********************************************************************"
 echo
 kubectl delete -f example.yaml
 
-# Clean tmp files
-rm tmp/cluster.yaml
+#==================================
+# Cleanup
+#==================================
 rm tmp/metallb.yaml
 
-
+#==================================
+# ArgoCD
+#==================================
 echo "***********************************************************************"
 echo "* Deployment ArgoCD                                                   *"
 echo "***********************************************************************"
@@ -117,7 +148,6 @@ configs:
   params:
     server.insecure: true
 EOF
-
 
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
