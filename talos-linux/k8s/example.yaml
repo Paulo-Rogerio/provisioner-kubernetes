@@ -5,6 +5,11 @@ metadata:
   labels:
     app: foo
 spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
   containers:
   - command:
     - /agnhost
@@ -13,6 +18,12 @@ spec:
     - --port=8080
     image: registry.k8s.io/e2e-test-images/agnhost:2.39
     name: foo-app
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+      seccompProfile:
+        type: RuntimeDefault
 ---
 apiVersion: v1
 kind: Service
