@@ -104,6 +104,7 @@ echo "======================================="
 generate_kubeconfig
 export KUBECONFIG=$PWD/configs/kubeconfig
 kubectl get nodes -o wide
+cp configs/kubeconfig ~/.kube/config
 echo 
 
 echo "======================================="

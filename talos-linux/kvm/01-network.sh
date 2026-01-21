@@ -9,7 +9,7 @@ cat > my-talos-net.xml <<EOF
   </forward>
   <ip address="10.0.0.1" netmask="255.255.255.0">
     <dhcp>
-      <range start="10.0.0.2" end="10.0.0.254"/>
+      <range start="10.0.0.2" end="10.0.0.100"/>
     </dhcp>
   </ip>
 </network>

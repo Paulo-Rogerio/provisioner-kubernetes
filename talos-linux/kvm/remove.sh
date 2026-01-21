@@ -1,5 +1,6 @@
 #!/usr/bin/bash
 
+cd $(dirname $0)
 sudo virsh destroy control-plane
 sudo virsh undefine control-plane --remove-all-storage
 sudo virsh destroy worker-node
