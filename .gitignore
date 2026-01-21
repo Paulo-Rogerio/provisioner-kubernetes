@@ -1,2 +1,3 @@
 vagrant/.vagrant
 kind/k8s/tmp
+talos-linux/kvm/configs/
