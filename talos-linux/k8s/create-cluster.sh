@@ -24,6 +24,13 @@ function check_pod_running(){
   registry:2
 }
 
+
+#==================================
+# Label Worker
+#==================================
+node=$(kubectl get nodes --no-headers | awk '$3=="<none>" {print $1}')
+kubectl label node ${node} node-role.kubernetes.io/worker=""
+
 #==================================
 # CIDR Metallb
 #==================================
