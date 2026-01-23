@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 export TALOSCONFIG=$(realpath configs/talosconfig)
-export control_plane=$(virsh domifaddr  control-plane | egrep '/' | awk '{print $4}' | cut -d/ -f1)
+export control_plane=$(virsh domifaddr control-plane | egrep '/' | awk '{print $4}' | cut -d/ -f1)
 export worker_node=$(virsh domifaddr worker-node | egrep '/' | awk '{print $4}' | cut -d/ -f1)
 
 function check_talos(){
