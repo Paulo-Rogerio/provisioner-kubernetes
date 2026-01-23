@@ -8,3 +8,4 @@ sudo virsh undefine worker-node --remove-all-storage
 sudo virsh net-destroy --network my-talos-net
 sudo virsh net-undefine --network my-talos-net
 rm -f configs/*
+echo "" > ~/.talos/config

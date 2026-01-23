@@ -109,6 +109,12 @@ cp configs/talosconfig ~/.talos/config
 echo 
 
 echo "======================================="
+echo " Lista Extensions"
+echo "======================================="
+talosctl get extensions --nodes ${control_plane}
+talosctl get extensions --nodes ${worker_node}
+
+echo "======================================="
 echo " Done"
 echo "======================================="
 
