@@ -105,6 +105,7 @@ generate_kubeconfig
 export KUBECONFIG=$PWD/configs/kubeconfig
 kubectl get nodes -o wide
 cp configs/kubeconfig ~/.kube/config
+cp configs/talosconfig ~/.talos/config
 echo 
 
 echo "======================================="
