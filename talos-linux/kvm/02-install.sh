@@ -15,6 +15,7 @@ function install()
     --ram ${ram} \
     --vcpus ${vcpu} \
     --disk path=/var/lib/libvirt/images/${name}.qcow2,bus=virtio,size=50,format=qcow2 \
+    --disk path=/var/lib/libvirt/images/${name}-data.qcow2,bus=virtio,size=5,format=qcow2 \
     --cdrom /var/lib/libvirt/images/metal-amd64.iso \
     --os-variant linux2022 \
     --network network=my-talos-net,mac=${mac} \
