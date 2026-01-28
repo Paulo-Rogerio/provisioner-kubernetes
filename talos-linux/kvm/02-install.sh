@@ -22,8 +22,6 @@ function install()
     --cpu host-passthrough \
     --noautoconsole
 
-  network
-
   sudo virsh \
     net-update my-talos-net add-last ip-dhcp-host \
     "<host mac='${mac}' name='${name}' ip='${ip}'/>" \
