@@ -6,8 +6,7 @@ function install()
   export ram=$2
   export vcpu=$3
   export ip=$4
-  export type=$5
-  export mac=$6
+  export mac=$5
 
   sudo virt-install \
     --virt-type kvm \
@@ -32,29 +31,11 @@ function install()
 
 }
 
-function network() {
-cat > configs/${type}-net.yaml <<EOF
-machine:
-  type: ${type}
-  network:
-    interfaces:
-      - interface: enp1s0
-        addresses: 
-          - ${ip}/24
-        routes:
-          - network: 0.0.0.0/0
-            gateway: 10.0.0.1
-    nameservers:
-      - 8.8.8.8
-      - 4.2.2.2
-EOF
-}
-
 gen_mac() {
   printf '52:54:00:%02x:%02x:%02x\n' \
     $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256))
 }
 
 # Call
-install "control-plane" 2048 3 "10.0.0.10" "controlplane" $(gen_mac)
-install "worker-node" 4096 4 "10.0.0.11" "worker" $(gen_mac)
+install "control-plane" 2048  3  "10.0.0.10"  $(gen_mac)
+install "worker-node"   4096  4  "10.0.0.11"  $(gen_mac)
